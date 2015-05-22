@@ -102,14 +102,102 @@ def copy_defitions(mcon, scon):
         print "cur_row = %d" % (cur_row)
     print "copied definitions"
 
+def generate_words_definitions(mcon, scon):
+    print "generating words and definitions"
+    mcur = mcon.cursor()
+    scur = scon.cursor()
+    scur.execute("DROP TABLE IF EXISTS definitions")
+    scur.execute("CREATE TABLE `definitions` (`wordID` bigint DEFAULT (0) NOT NULL, `userID` bigint DEFAULT (0) NOT NULL, `definition` text NOT NULL, `dateTime` timestamp DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')) NOT NULL, CHECK (`wordID` >= 0), CHECK (`userID` >= 0))")
+    scur.execute("DROP TABLE IF EXISTS words")
+    scur.execute("CREATE TABLE `words` (`wordID` integer NOT NULL PRIMARY KEY AUTOINCREMENT, `word` varchar(255) NOT NULL)")
+    num_rows_per_query = 1000
+    cur_row = 0
+    mcur.execute("SELECT COUNT(*) FROM `message_history`")
+    mrows = mcur.fetchone()
+    total_rows = mrows[0]
+    print "found %d rows, processing %d at a time" % (total_rows, num_rows_per_query)
+    inserts = 0
+    while cur_row < total_rows:
+        print "processing rows %d to %d " % (cur_row, cur_row+num_rows_per_query)
+        mcur.execute("select `userID`, `message`, `dateStamp` from `message_history` limit %s,%s", (cur_row, num_rows_per_query))
+        mrows = mcur.fetchall()
+        for mrow in mrows:
+            userID = mrow[0]
+            message = mrow[1].strip()
+            dateStamp = mrow[2]
+            fSpace = message.find(' ')
+            if fSpace != -1:
+                fWord = message[0:fSpace]
+                sSpace = message.find(' ', fSpace+1)
+                if sSpace != -1:
+                    sWord = message[fSpace+1:sSpace].lower()
+                    if sWord == "is":
+                        word = fWord.lower()
+                        scur.execute("SELECT `wordID` from `words` where `word`=?", (unicode(word.strip('\r\n'),'latin-1'),))
+                        srow = scur.fetchone()
+                        if srow:
+                            wordID = srow[0]
+                        else:
+                            scur.execute("INSERT INTO `words`(`word`) VALUES(?)", (unicode(word.strip('\r\n'),'latin-1'),))
+                            wordID = scur.lastrowid
+                            inserts+=1
+                        scur.execute("INSERT INTO `definitions`(`wordID`,`userID`,`definition`,`dateTime`) VALUES(?,?,?,?)", (wordID,userID,unicode(message.strip('\r\n'),'latin-1'),dateStamp))
+                        inserts+=1
+            if inserts >= 1000:
+                scon.commit()
+                inserts = 0
+        cur_row += num_rows_per_query
+        print "cur_row = %d" % cur_row
+
+    mcur.execute("select count(*) from definitions")
+    mrows = mcur.fetchone()
+    total_rows = mrows[0]
+    cur_row = 0
+    inserts = 0
+    print "found %d rows, processing %d at a time" % (total_rows, num_rows_per_query)
+    while cur_row < total_rows:
+        print "processing rows %d to %d " % (cur_row, cur_row+num_rows_per_query)
+        mcur.execute("select wordID, userID, definition, dateTime from definitions limit %s,%s", (cur_row, num_rows_per_query))
+        mrows = mcur.fetchall()
+        for mrow in mrows:
+            wordID = mrow[0]
+            userID = mrow[1]
+            message = mrow[2].strip()
+            dateTime = mrow[3]
+            fSpace = message.find(' ')
+            if fSpace != -1:
+                fWord = message[0:fSpace]
+                sSpace = message.find(' ', fSpace+1)
+                if sSpace != -1:
+                    sWord = message[fSpace+1:sSpace].lower()
+                    if sWord == "is":
+                        word = fWord.lower()
+                        scur.execute("SELECT `wordID` from `words` where `word`=?", (unicode(word.strip('\r\n'),'latin-1'),))
+                        srow = scur.fetchone()
+                        if srow:
+                            wordID = srow[0]
+                        else:
+                            scur.execute("INSERT INTO `words`(`word`) VALUES(?)", (unicode(word.strip('\r\n'),'latin-1'),))
+                            wordID = scur.lastrowid
+                            inserts+=1
+                        scur.execute("INSERT INTO `definitions`(`wordID`,`userID`,`definition`,`dateTime`) VALUES(?,?,?,?)", (wordID,userID,unicode(message.strip('\r\n'),'latin-1'),dateStamp))
+                        inserts+=1
+                    if inserts >= 1000:
+                        scon.commit()
+                        inserts = 0
+        cur_row += num_rows_per_query
+        print "cur_row = %d" % cur_row
+
+    scon.commit()
 
 try:
     mcon = mdb.connect('localhost', 'root', 'thisisit', 'clanfuq')
     scon = sql.connect('clanfuq.db')
-    copy_message_history(mcon, scon)
-    copy_words(mcon, scon)
-    copy_users(mcon, scon)
-    copy_defitions(mcon, scon)
+    #copy_message_history(mcon, scon)
+    #copy_users(mcon, scon)
+    generate_words_definitions(mcon, scon)
+    #copy_words(mcon, scon)
+    #copy_defitions(mcon, scon)
 
 except mdb.Error as e:
     print "Error %d: %s" % (e.args[0], e.args[1])
