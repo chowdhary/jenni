@@ -16,7 +16,7 @@ def copy_message_history(mcon, scon):
     mrows = mcur.fetchone()
     total_rows = mrows[0]
     cur_row = 0
-    num_rows_per_query = 100
+    num_rows_per_query = 1000
     print "found %d rows, processing %d at a time" % (total_rows, num_rows_per_query)
     while cur_row < total_rows:
         print "processing rows %d to %d" % (cur_row, cur_row+num_rows_per_query)
@@ -40,7 +40,7 @@ def copy_words(mcon, scon):
     mrows = mcur.fetchone()
     total_rows = mrows[0]
     cur_row = 0
-    num_rows_per_query = 100
+    num_rows_per_query = 1000
     print "found %d rows, processing %d at a time" % (total_rows, num_rows_per_query)
     while cur_row < total_rows:
         print "processing rows %d to %d" % (cur_row, cur_row+num_rows_per_query)
@@ -64,7 +64,7 @@ def copy_users(mcon, scon):
     mrows = mcur.fetchone()
     total_rows = mrows[0]
     cur_row = 0
-    num_rows_per_query = 100
+    num_rows_per_query = 1000
     print "found %d rows, processing %d at a time" % (total_rows, num_rows_per_query)
     while cur_row < total_rows:
         print "processing rows %d to %d" % (cur_row, cur_row+num_rows_per_query)
@@ -88,7 +88,7 @@ def copy_defitions(mcon, scon):
     mrows = mcur.fetchone()
     total_rows = mrows[0]
     cur_row = 0
-    num_rows_per_query = 100
+    num_rows_per_query = 1000
     print "found %d rows, processing %d at a time" % (total_rows, num_rows_per_query)
     while cur_row < total_rows:
         print "processing rows %d to %d" % (cur_row, cur_row+num_rows_per_query)
@@ -99,7 +99,6 @@ def copy_defitions(mcon, scon):
             #print "definition is %s" % (unicode(mrow[2].strip('\r\n'), 'cp1252'))
         scon.commit()
         cur_row += num_rows_per_query
-        break
         print "cur_row = %d" % (cur_row)
     print "copied definitions"
 
@@ -109,7 +108,7 @@ try:
     scon = sql.connect('clanfuq.db')
     copy_message_history(mcon, scon)
     copy_words(mcon, scon)
-    #copy_users(mcon, scon)
+    copy_users(mcon, scon)
     copy_defitions(mcon, scon)
 
 except mdb.Error as e:

@@ -97,7 +97,7 @@ def get_definition(wordID):
         con = sql.connect(db)
         cur = con.cursor()
         #cur.execute("SELECT `definition` FROM `definitions` WHERE `word`=? ORDER BY `id` DESC LIMIT 1", (word,))
-        cur.execute("SELECT `definition` FROM `definitions` ORDER BY `dateTime` DESC LIMIT 0,1")
+        cur.execute("SELECT `definition` FROM `definitions` WHERE `wordID`=? ORDER BY `dateTime` DESC LIMIT 0,1", (wordID,))
         row = cur.fetchone()
         if row:
             return row[0]
@@ -113,14 +113,14 @@ def debug_p(string):
     pass
 
 def clanfuq(jenni, input):
-    debug_p("jenni: %s and input: %s" % (jenni.nick, input.nick))
+    debug_p("jenni: %s and input: %s" % (jenni.name, input.full_ident))
     if jenni.nick == input.nick:
         debug_p("self, returning")
         return
     created = datetime.datetime.now()
     text = input.group()
     text = text.strip()
-    words = text.split(" ")
+    words = text.split()
     debug_p(repr(input.admin))
     userID = get_userID(input, created)
     debug_p("provided userID: %s" % userID)
