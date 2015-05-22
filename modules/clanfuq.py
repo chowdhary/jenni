@@ -110,7 +110,7 @@ def get_definition(wordID):
             con.close()
 
 def debug_p(string):
-    print string
+    #print string
     pass
 
 def clanfuq(jenni, input):
