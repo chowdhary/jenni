@@ -75,13 +75,16 @@ def log_raw(line):
     f.close()
 
 class Bot(asynchat.async_chat):
-    def __init__(self, nick, name, channels, password=None, logchan_pm=None, logging=False, ipv6=False):
+    def __init__(self, nick, name, channels, user=None, password=None, logchan_pm=None, logging=False, ipv6=False):
         asynchat.async_chat.__init__(self)
         self.set_terminator('\n')
         self.buffer = ''
 
         self.nick = nick
-        self.user = nick
+        if user is not None:
+            self.user = user
+        else:
+            self.user = nick
         self.name = name
         self.password = password
 
@@ -228,7 +231,7 @@ class Bot(asynchat.async_chat):
         if not self.use_sasl and self.password:
             self.write(('PASS', self.password))
             # Store the fact that we authed, or at least tried
-            self.authed_attempted = True
+            self.auth_attempted = True
         self.write(('NICK', self.nick))
         self.write(('USER', self.user, '+iw', self.nick), self.name)
 
