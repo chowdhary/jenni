@@ -8,6 +8,7 @@ More info:
 """
 
 import datetime
+import random
 import sqlite3 as sql
 from modules import unicode as uc
 
@@ -151,6 +152,21 @@ def clanfuq(jenni, input):
                 add_definition(input, wordID, userID, created)
                 debug_p("added definition")
 clanfuq.rule = r'.*'
+
+blizz_gg_ez_responses = ["Good game! Best of luck to you all!",
+                         "It was an honor to play with you all. Thank you.",
+                         "Mommy says people my age shouldn't suck their thumbs.",
+                         "C'mon, Mom! One more game before you tuck me in. Oops mistell.",
+                         "It's past my bedtime. Please don't tell my mommy.",
+                         "Well played. I salute you all.",
+                         "I could really use a hug right now.",
+                         "Wishing you all the best.",
+                         "I feel very, very small... please hold me...",
+                         ]
+def blizz(jenni, input):
+    nick = input.nick
+    jenni.say("%s meant to say %s" % (nick, random.choice(blizz_gg_ez_responses)))
+blizz.rule = r'gg ez'
 
 if __name__ == '__main__':
     print __doc__.strip()
