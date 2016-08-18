@@ -23,6 +23,7 @@ import time
 import urllib2
 import web
 
+
 # Place a file in your ~/jenni/ folder named, bitly.txt
 # and inside this file place your API key followed by a ','
 # and then your username. For example, the only line in that
@@ -32,18 +33,16 @@ import web
 # this variable is to determine when to use bitly. If the URL is more
 # than this length, it'll display a bitly URL instead. To disable bit.ly,
 # put None even if it's set to None, triggering .bitly command will still work!
-BITLY_TRIGGER_LEN_TITLE = 20
+BITLY_TRIGGER_LEN_TITLE = 30
 BITLY_TRIGGER_LEN_NOTITLE = 80
 EXCLUSION_CHAR = '!'
 IGNORE = list()
 
-USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; rv:24.0) Gecko/20100101 Firefox/24.0'
-
 # do not edit below this line unless you know what you're doing
 bitly_loaded = False
 BLOCKED_MODULES = ['bitly', 'head', 'host', 'ip', 'isup', 'longurl', 'py',
-                   'short', 'st', 'tell', 'title', 'tw', 'twitter', 'unbitly',
-                   'untiny',]
+                   'short', 'spotify', 'sp', 'st', 'tell', 'title', 'tw',
+                   'twitter', 'unbitly', 'untiny', 'fixurl', 'fix_url', 'isgd']
 simple_channels = list()
 
 try:
@@ -105,26 +104,25 @@ def find_title(url):
     """
     This finds the title when provided with a string of a URL.
     """
-    uri = url
 
     for item in IGNORE:
-        if item in uri:
+        if item in url:
             return False, 'ignored'
 
-    if not re.search('^((https?)|(ftp))://', uri):
-        uri = 'http://' + uri
+    if not re.search('^((https?)|(ftp))://', url):
+        url = 'http://' + url
 
-    if '/#!' in uri:
-        uri = uri.replace('/#!', '/?_escaped_fragment_=')
+    if '/#!' in url:
+        url = url.replace('/#!', '/?_escaped_fragment_=')
 
-    if 'i.imgur' in uri:
-        a = uri.split('.')
-        uri = a[0][:-1] + '.'.join(a[1:-1])
+    if 'i.imgur' in url:
+        a = url.split('.')
+        url = a[0][:-1] + '.'.join(a[1:-1])
 
-    if 'zerobin.net' in uri:
+    if 'zerobin.net' in url:
         return True, 'ZeroBin'
 
-    uri = uc.decode(uri)
+    url = uc.decode(url)
 
     msg = str()
     k = 0
@@ -399,6 +397,12 @@ def show_title_auto(jenni, input):
         if input.startswith('.%s ' % (each)):
             ## Don't want it to show duplicate titles
             return
+
+    if hasattr(jenni.config, 'auto_title_disable_chans'):
+        disabled_channels = jenni.config.auto_title_disable_chans
+        if input.sender in disabled_channels or (input.sender).lower() in disabled_channels:
+            return
+
     if len(re.findall('\([\d]+\sfiles\sin\s[\d]+\sdirs\)', input)) == 1:
         ## Directory Listing of files
         return
@@ -429,7 +433,7 @@ def show_title_auto(jenni, input):
             ## let's make it 'https' instead of 'http'
             bitly_link = bitly_link.replace('http:', 'https:')
 
-        if returned_title == 'imgur: the simple image sharer':
+        if 'imgur: the most awesome images on the internet' in (returned_title).lower():
             ## because of the i.imgur hack above this is done
             ## to prevent from showing useless titles on image
             ## files
@@ -549,6 +553,11 @@ def unbitly(jenni, input):
             new_url = results['geturl']
         except:
             return jenni.say('Failed to grab URL: %s' % (url))
+
+    channel = input.sender
+    if not hasattr(jenni, 'last_seen_uri'):
+        jenni.last_seen_uri = dict()
+    jenni.last_seen_uri[channel] = new_url
 
     if new_url.startswith(('http://', 'https://')):
         jenni.say(new_url)

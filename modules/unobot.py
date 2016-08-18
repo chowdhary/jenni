@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """
 Copyright 2010 Tamas Marki. All rights reserved.
 
@@ -33,8 +34,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import random
 from datetime import datetime, timedelta
 import time
-
-random.seed()
 
 away_last = 0
 
@@ -188,7 +187,8 @@ class UnoBot:
             for p in self.players:
                 self.players[p].append(self.getCard ())
         self.topCard = self.getCard()
-        while self.topCard in ['R', 'S', 'D2', 'W', 'WD4']: self.topCard = self.getCard()
+        while self.topCard.lstrip(self.colors) in 'R S D2 W WD4':
+           self.topCard = self.getCard()
         self.currentPlayer = 1
         self.cardPlayed(jenni, self.topCard)
         self.showOnTurn(jenni)
@@ -282,16 +282,20 @@ class UnoBot:
 
     def createnewdeck(self):
         ret = list()
-        for a in self.colored_card_nums:
-            for b in self.colors:
-                ret.append(b + a)
+
+        for i in range(2):
+            for a in self.colored_card_nums:
+                for b in self.colors:
+                    if i > 0 and a == '0':
+                        continue
+                    ret.append(b + a)
+
         for a in self.special_cards:
-            ret.append(a)
-            ret.append(a)
+            for i in range(4):
+                ret.append(a)
 
         if len(self.playerOrder) > 4:
             ret *= 2
-            random.shuffle(ret)
 
         random.shuffle(ret)
 
@@ -739,7 +743,7 @@ unostats.rate = 0
 
 def uno_help(jenni, input):
     nick = input.group(2)
-    txt = 'For rules, examples, and getting started: https://j.mp/esl47K'
+    txt = 'For rules, examples, and getting started: https://is.gd/4YxydS'
     if nick:
         nick = (nick).strip()
         output = "%s: %s" % (nick, txt)
@@ -812,8 +816,10 @@ def uno_get_names(jenni, input):
         if x not in away_list:
             new_list.append(x)
     new_list.remove(jenni.config.nick)
-    new_list.remove('ChanServ')
-    new_list.remove('AntiSpamMeta')
+    if 'ChanServ' in new_list:
+        new_list.remove('ChanServ')
+    if 'AntiSpamMeta' in new_list:
+        new_list.remove('AntiSpamMeta')
     new_list.sort()
     final_string = ', '.join(new_list)
     if user_triggered:
