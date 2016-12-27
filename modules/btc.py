@@ -79,19 +79,38 @@ def btc(jenni, input):
 
         exchange_rates['USD']['coinbase'] = ppnum(float(coinbase_json['btc_to_usd']))
 
-    response = '1 BTC (in USD) = '
-    symbols = exchange_rates['USD'].keys()
-    symbols.sort()
+    split_input = input.split()
+    if len(split_input) > 1:
+        response = split_input[1]
+        try:
+            btc_amt = float(split_input[1])
+            response = '{0} BTC = '.format(split_input[1])
+            symbols = exchange_rates['USD'].keys()
+            symbols.sort()
+            first = True
+            for each in symbols:
+                if each.replace('USD', '') in exchanges:
+                    if not first:
+                        response += ' | '
+                    first = False
+                    response += '{}: {:.2f} USD'.format(each,
+                            (float(exchange_rates['USD'][each]) * btc_amt))
+        except ValueError:
+            response = '%s is not a valid BTC amount' % (split_input[1])
+    else:
+        response = '1 BTC (in USD) = '
+        symbols = exchange_rates['USD'].keys()
+        symbols.sort()
 
-    for each in symbols:
-        if each.replace('USD', '') in exchanges:
-            response += '%s: %s | ' % (each, exchange_rates['USD'][each])
+        for each in symbols:
+         if each.replace('USD', '') in exchanges:
+             response += '%s: %s | ' % (each, exchange_rates['USD'][each])
 
-    response += 'lolcat (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase']) * 160))
+        response += 'lolcat (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase']) * 160))
 
-    response += 'Howells (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase']) * 7500))
+        response += 'Howells (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase']) * 7500))
 
-    response += 'last updated at: %s UTC' % (str(last_check))
+        response += 'last updated at: %s UTC' % (str(last_check))
 
     jenni.say(response)
 btc.commands = ['btc']
