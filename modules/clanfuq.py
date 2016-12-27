@@ -153,6 +153,23 @@ def clanfuq(jenni, input):
                 debug_p("added definition")
 clanfuq.rule = r'.*'
 
+def lookup(jenni, input):
+    debug_p("jenny: %s and input: %s" % (jenni.name, input.full_ident))
+    global db
+    try:
+        con = sql.connect(db)
+        cur = con.cursor()
+        cur.execute("SELECT count(wordID) from `words` where 1")
+        row = cur.fetchone()
+        if row:
+            jenni.say("found %s words" % row[0])
+    except sql.Error, e:
+        print "Error %s:" % e.args[0]
+    finally:
+        if con:
+            con.close()
+lookup.commands = ['lookup']
+
 blizz_gg_ez_responses = ["Good game! Best of luck to you all!",
                          "It was an honor to play with you all. Thank you.",
                          "Mommy says people my age shouldn't suck their thumbs.",
@@ -164,8 +181,10 @@ blizz_gg_ez_responses = ["Good game! Best of luck to you all!",
                          "I feel very, very small... please hold me...",
                          ]
 def blizz(jenni, input):
+    debug_p(input.nick)
+    debug_p(random.choice(blizz_gg_ez_responses))
     nick = input.nick
-    jenni.say("%s meant to say %s" % (nick, random.choice(blizz_gg_ez_responses)))
+    jenni.say("%s meant to say \"%s\"" % (nick, random.choice(blizz_gg_ez_responses)))
 blizz.rule = r'gg ez'
 
 if __name__ == '__main__':
