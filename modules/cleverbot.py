@@ -21,7 +21,6 @@ Example of how to use the bindings:
 
 """
 
-#import cookielib
 import collections
 import hashlib
 import requests
@@ -33,14 +32,13 @@ from future.backports.html import parser
 entity_parser = parser.HTMLParser()
 
 
-class Cleverbot:
-    """
-    Wrapper over the Cleverbot API.
+class Cleverbot(object):
+    """Handles a conversation with Cleverbot.
 
     """
     HOST = "www.cleverbot.com"
     PROTOCOL = "http://"
-    RESOURCE = "/webservicemin"
+    RESOURCE = "/webservicemin?uc=321&"
     API_URL = PROTOCOL + HOST + RESOURCE
 
     headers = {
@@ -89,38 +87,10 @@ class Cleverbot:
             )
         )
 
-        """
-            ('stimulus': ''),
-            ('start': 'y'),
-            ('sessionid': ''),
-            ('vText8': ''),
-            ('vText7': ''),
-            'vText6': '',
-            'vText5': '',
-            'vText4': '',
-            'vText3': '',
-            'vText2': '',
-            'icognoid': 'wsf',  # Never modified
-            'icognocheck': '',
-            'fno': 0,  # Never modified
-            'prevref': '',
-            'emotionaloutput': '',  # Never modified
-            'emotionalhistory': '',  # Never modified
-            'asbotname': '',  # Never modified
-            'ttsvoice': '',  # Never modified
-            'typing': '',  # Never modified
-            'lineref': '',
-            'sub': 'Say',  # Never modified
-            'islearning': 1,  # Never modified
-            'cleanslate': False,  # Never modified
-        }
-
-        """
-
         # the log of our conversation with Cleverbot
         self.conversation = []
 
-        # get the main page to get a cookie (see bug  #13)
+        # get the main page to get a cookie (see bug #13)
         self.session = requests.Session()
         self.session.get(Cleverbot.PROTOCOL + Cleverbot.HOST)
 
@@ -152,7 +122,7 @@ class Cleverbot:
         # Add Cleverbot's reply to the conversation log
         self.conversation.append(parsed['answer'])
 
-        return parsed['answer']
+        return parsed['answer'].encode('latin-1').decode('utf-8')
 
     def _send(self):
         """POST the user's question and all required information to the

@@ -105,7 +105,7 @@ def code(jenni, search):
 def get_metar(icao_code):
     '''Obtain METAR data from NOAA for a given ICAO code'''
 
-    uri = 'http://weather.noaa.gov/pub/data/observations/metar/stations/%s.TXT'
+    uri = 'http://tgftp.nws.noaa.gov/data/observations/metar/stations/%s.TXT'
 
     try:
         page = web.get(uri % icao_code)
@@ -216,10 +216,14 @@ def f_weather(jenni, input):
     text = input.group(2)
 
     status, icao_code = get_icao(jenni, text)
+    print 'status:', status
+    print 'icao_code:', icao_code
     if not status:
         return jenni.say(icao_code)
 
     status, page = get_metar(icao_code)
+    print 'status:', status
+    print 'page:', page
     if not status:
         return jenni.say(page)
 
@@ -601,7 +605,7 @@ def remove_dots(txt):
     if '..' not in txt:
         return txt
     else:
-        txt = re.sub('\.\.', '.', txt)
+        txt = re.sub(r'\.\.', '.', txt)
         return remove_dots(txt)
 
 def chomp_desc(txt):
@@ -614,6 +618,7 @@ def chomp_desc(txt):
     out = re.sub('and', '&', out)
     out = re.sub('occasionally', 'occ', out)
     out = re.sub('occasional', 'occ', out)
+    out = re.sub('especially', 'esp.', out)
     out = re.sub('possibly', 'poss', out)
     out = re.sub('possible', 'poss', out)
     out = re.sub('([Ss])cattered', r'\1cat', out)
@@ -621,7 +626,7 @@ def chomp_desc(txt):
     out = re.sub('evening', 'AM', out)
     out = re.sub('afternoon', 'PM', out)
     out = re.sub('in the', 'in', out)
-    #out = re.sub('\.\.', ' ', out)
+    #out = re.sub(r'\.\.', ' ', out)
     out = remove_dots(out)
     out = re.sub('Then the (\S)', upper_repl, out)
     return out
@@ -629,7 +634,7 @@ def chomp_desc(txt):
 
 def forecast(jenni, input):
     if not hasattr(jenni.config, 'forecastio_apikey'):
-        return jenni.say('Please sign up for a forecast.io API key at https://forecast.io/ or try .wx-noaa or .weather-noaa')
+        return jenni.say('Please sign up for a Dark Sky API key at https://darksky.net/ or try .wx-noaa or .weather-noaa')
 
     txt = input.group(2)
     if not txt:
@@ -639,7 +644,7 @@ def forecast(jenni, input):
     if name == 'ImportError' and not lat and not lng:
         return install_geopy
 
-    url = 'https://api.forecast.io/forecast/%s/%s,%s'
+    url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
     url = url % (jenni.config.forecastio_apikey, urllib.quote(lat), urllib.quote(lng))
 
@@ -648,7 +653,7 @@ def forecast(jenni, input):
         ## if this fails, we got bigger problems
         page = web.get(url)
     except:
-        return jenni.say('Could not acess https://api.forecast.io/')
+        return jenni.say('Could not acess https://api.darksky.net/')
 
     ## we want some tasty JSON
     try:
@@ -750,16 +755,16 @@ def forecast(jenni, input):
     if second_output.endswith(' | '):
         second_output = second_output[:-3]
 
-    ## required according to ToS by forecast.io
-    second_output += ' (Powered by Forecast, forecast.io)'
+    ## required according to ToS by darksky.net
+    second_output += ' (Powered by Dark Sky, darksky.net)'
     jenni.say(second_output)
 forecast.commands = ['forecast', 'fct', 'fc']
-forecast.rate = 15
+forecast.rate = 5
 
 
 def forecastio_current_weather(jenni, input):
     if not hasattr(jenni.config, 'forecastio_apikey'):
-        return jenni.say('Please sign up for a forecast.io API key at https://forecast.io/')
+        return jenni.say('Please sign up for a darksky.net API key at https://darksky.net/')
 
     txt = input.group(2)
     if not txt:
@@ -770,7 +775,7 @@ def forecastio_current_weather(jenni, input):
     if name == 'ImportError' and not lat and not lng:
         return install_geopy
 
-    url = 'https://api.forecast.io/forecast/%s/%s,%s'
+    url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
     url = url % (jenni.config.forecastio_apikey, urllib.quote(lat), urllib.quote(lng))
 
@@ -779,8 +784,8 @@ def forecastio_current_weather(jenni, input):
         ## if the Internet is working this should work, \o/
         page = web.get(url)
     except:
-        ## well, crap, check your Internet, and if you can access forecast.io
-        return jenni.say('Could not acess https://api.forecast.io/')
+        ## well, crap, check your Internet, and if you can access darksky.net
+        return jenni.say('Could not acess https://api.darksky.net/')
 
     try:
         ## we want tasty JSON
@@ -792,7 +797,7 @@ def forecastio_current_weather(jenni, input):
 
     if 'currently' not in data:
         ## doesn't happen until the GPS coords are completely bonkers
-        return jenni.say('No information obtained from forecast.io for the given location: %s,' % (name, lat, lng,) )
+        return jenni.say('No information obtained from darksky.net for the given location: %s,' % (name, lat, lng,) )
 
     ## let the fun begin!!
 
@@ -809,7 +814,7 @@ def forecastio_current_weather(jenni, input):
     APtemp = today['apparentTemperature']
 
     ## this code is different than the section in the previous sectio
-    ## as forecast.io uses more precise measurements than NOAA
+    ## as darksky.net uses more precise measurements than NOAA
     if cover >= 0.8:
         cover_word = 'Overcast'
     elif cover >= 0.5:
@@ -861,11 +866,11 @@ def forecastio_current_weather(jenni, input):
     output += uc.encode(name)
     output + '; %s UTC' % (time)
 
-    ## required according to ToS by forecast.io
-    output += ' (Powered by Forecast, forecast.io)'
+    ## required according to ToS by darksky.net
+    output += ' (Powered by Dark Sky, darksky.net)'
     jenni.say(output)
 forecastio_current_weather.commands = ['wxi-ft', 'wx-ft', 'weather-ft', 'weather', 'wx']
-forecastio_current_weather.rate = 15
+forecastio_current_weather.rate = 5
 
 
 def make_rh_C(temp, dewpoint):
@@ -906,11 +911,11 @@ def add_degree(txt):
 
 def weather_wunderground(jenni, input):
     if not hasattr(jenni.config, 'wunderground_apikey'):
-        return jenni.say('Please sign up for a wunderground.com API key at http://www.wunderground.com/weather/api/ or try .wx-noaa or .weather-noaa')
+        return jenni.say('Please sign up for a wunderground.com API key at https://www.wunderground.com/weather/api/ or try .wx-noaa or .weather-noaa')
 
     apikey = jenni.config.wunderground_apikey
 
-    url = 'http://api.wunderground.com/api/%s/conditions/geolookup/q/%s.json'
+    url = 'https://api.wunderground.com/api/%s/conditions/geolookup/q/%s.json'
     txt = input.group(2)
     if not txt:
         return jenni.say('No input provided. Please provide a locaiton.')
@@ -998,11 +1003,11 @@ def preface_location(ci, reg='', cty=''):
 
 def forecast_wg(jenni, input):
     if not hasattr(jenni.config, 'wunderground_apikey'):
-        return jenni.say('Please sign up for a wunderground.com API key at http://www.wunderground.com/weather/api/ or try .wx-noaa or .weather-noaa')
+        return jenni.say('Please sign up for a wunderground.com API key at https://www.wunderground.com/weather/api/ or try .wx-noaa or .weather-noaa')
 
     apikey = jenni.config.wunderground_apikey
 
-    url = 'http://api.wunderground.com/api/%s/forecast10day/geolookup/q/%s.json'
+    url = 'https://api.wunderground.com/api/%s/forecast10day/geolookup/q/%s.json'
 
     txt = input.group(2)
     if not txt:
@@ -1062,7 +1067,15 @@ def forecast_wg(jenni, input):
         lows = u'\x02\x0302%s\u00B0F (%s\u00B0C)\x03\x02' % (day['low']['fahrenheit'], day['low']['celsius'])
         #wind = 'From %s at %s-mph (%s-kph)' % (day['avewind']['dir'], day['maxwind']['mph'], day['maxwind']['kph'])
 
-        temp = '\x02\x0310%s\x03\x02: %s / %s, \x1FCond\x1F: %s. Eve: %s | ' % (day_of_week, highs, lows, days_text[k], days_text[k + 1])
+        days_text_temp = days_text[k]
+        if not days_text[k].endswith('.'):
+            days_text_temp += '.'
+
+        days_text1_temp = days_text[k + 1]
+        if not days_text[k + 1].endswith('.'):
+            days_text1_temp += '.'
+
+        temp = '\x02\x0310%s\x03\x02: %s / %s, \x1FCond\x1F: %s Eve: %s | ' % (day_of_week, highs, lows, days_text_temp, days_text1_temp)
 
         k += 2
         if (k / 2.) <= 2:
@@ -1077,7 +1090,7 @@ def forecast_wg(jenni, input):
     jenni.say(output_second)
 
 forecast_wg.commands = ['forecast-wg']
-forecast_wg.rate = 15
+forecast_wg.rate = 5
 
 
 
