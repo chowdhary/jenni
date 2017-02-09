@@ -77,13 +77,16 @@ def btc(jenni, input):
         except:
             pass
 
-        exchange_rates['USD']['coinbase'] = ppnum(float(coinbase_json['btc_to_usd'].replace(',','')))
+        if type(coinbase_json['btc_to_usd']) is str:
+            exchange_rates['USD']['coinbase'] = ppnum(float(coinbase_json['btc_to_usd'].replace(',','')))
+        else:
+            exchange_rates['USD']['coinbase'] = ppnum(float(coinbase_json['btc_to_usd']))
 
     split_input = input.split()
     if len(split_input) > 1:
         response = split_input[1]
         try:
-            btc_amt = float(split_input[1].replace(',',''))
+            btc_amt = float(split_input[1].replace(',','')) if type(split_input[1]) is str else float(split_input[1])
             response = '{0} BTC = '.format(split_input[1])
             symbols = exchange_rates['USD'].keys()
             symbols.sort()
@@ -94,7 +97,9 @@ def btc(jenni, input):
                         response += ' | '
                     first = False
                     response += '{}: {:.2f} USD'.format(each,
-                            (float(exchange_rates['USD'][each].replace(',','')) * btc_amt))
+                            (float(exchange_rates['USD'][each].replace(',','')) 
+                             if type(exchange_rates['USD'][each]) is str 
+                             else float(exchange_rates['USD'][each]) * btc_amt))
         except ValueError:
             response = '%s is not a valid BTC amount' % (split_input[1])
     else:
@@ -106,9 +111,12 @@ def btc(jenni, input):
          if each.replace('USD', '') in exchanges:
              response += '%s: %s | ' % (each, exchange_rates['USD'][each])
 
-        response += 'lolcat (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase'].replace(',','')) * 160))
-
-        response += 'Howells (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase'].replace(',','')) * 7500))
+        if type(exchange_rates['USD']['coinbase']) is str:
+            response += 'lolcat (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase'].replace(',','')) * 160))
+            response += 'Howells (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase'].replace(',','')) * 7500))
+        else:
+            response += 'lolcat (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase']) * 160))
+            response += 'Howells (coinbase) index: $%s | ' % (ppnum(float(exchange_rates['USD']['coinbase']) * 7500))
 
         response += 'last updated at: %s UTC' % (str(last_check))
 
