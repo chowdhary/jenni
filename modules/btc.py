@@ -97,7 +97,7 @@ def btc(jenni, input):
                         response += ' | '
                     first = False
                     response += '{}: {:.2f} USD'.format(each,
-                            (float(exchange_rates['USD'][each].replace(',','')) 
+                            (float(exchange_rates['USD'][each].replace(',','')) * btc_amt 
                              if type(exchange_rates['USD'][each]) is str 
                              else float(exchange_rates['USD'][each]) * btc_amt))
         except ValueError:
